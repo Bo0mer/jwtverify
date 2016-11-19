@@ -7,7 +7,7 @@ import (
 	"os"
 )
 
-const helpText = `Usage: jwtverify is a tool to verify and examine jwt tokens.
+const helpText = `Usage: jwtverify is a tool to verify and decode JSON Web Tokens.
 
     jwtverify <action> <token> [-k key] [-s secret] [-p]
 

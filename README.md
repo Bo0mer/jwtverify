@@ -4,7 +4,7 @@ Verify and decode JWTs. For more info on JWT, see [this](http://self-issued.info
 
 ## User's manual
 ```
-Usage: jwtverify is a tool to verify and examine jwt tokens.
+Usage: jwtverify is a tool to verify and decode JSON Web Tokens.
 
     jwtverify <action> <token> [-k key] [-s secret] [-p]
 
