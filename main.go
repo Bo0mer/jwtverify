@@ -1,52 +1,83 @@
 package main
 
 import (
-	"crypto/rsa"
+	"flag"
 	"fmt"
-	"io/ioutil"
-	"log"
 	"os"
-
-	"github.com/dgrijalva/jwt-go"
 )
 
-func init() {
-	log.SetFlags(0)
+const helpText = `Usage: jwtverify is a tool to verify and examine jwt tokens.
+
+    jwtverify <action> <token> [-k key] [-s secret] [-p]
+
+Actions:
+    verify	Verify whether the token is valid.
+    decode	Only decode the token, skip verification.
+
+    help	Print this.
+
+Options:
+    -k		Key (path to pem file) used to sign the token. To use with RSA.
+    -s		Secret used to sign the token. To use with HS.
+    -p		Pretty output.
+`
+
+var cmds = map[string]func(args ...string){
+	"decode": decode,
+	"verify": verify,
 }
 
 func main() {
-	if len(os.Args) != 3 {
-		log.Fatal("usage: jwtverify <token> <key>\n")
+	if len(os.Args) == 2 && os.Args[1] == "help" {
+		usage("")
+	}
+	if len(os.Args) < 3 {
+		usage("insufficient arguments")
 	}
 
-	tokenString := os.Args[1]
-	keyPath := os.Args[2]
-
-	publicKey, err := readKey(keyPath)
-	if err != nil {
-		log.Fatalf("error parsing public key: %v\n", err)
+	cmd := os.Args[1]
+	fn, ok := cmds[cmd]
+	if !ok {
+		usage("unknown command " + cmd)
 	}
 
-	token, err := jwt.Parse(tokenString, func(token *jwt.Token) (interface{}, error) {
-		if _, ok := token.Method.(*jwt.SigningMethodRSA); !ok {
-			return nil, fmt.Errorf("Unexpected signing method: %v", token.Header["alg"])
-		}
-		return publicKey, nil
-	})
-
-	fmt.Println(token.Valid)
+	fn(os.Args[2:]...)
 }
 
-func readKey(path string) (*rsa.PublicKey, error) {
-	fd, err := os.Open(path)
-	if err != nil {
-		return nil, err
-	}
-	defer fd.Close()
+func decode(args ...string) {
+	token := args[0]
 
-	key, err := ioutil.ReadAll(fd)
-	if err != nil {
-		return nil, err
+	var pretty bool
+	flag.BoolVar(&pretty, "p", false, "Pretty output.")
+	flag.CommandLine.Parse(args[1:])
+
+	decodeToken(token, pretty)
+}
+
+func verify(args ...string) {
+	token := args[0]
+
+	var keyFile string
+	var secret string
+
+	flag.StringVar(&keyFile, "k", "", "Key (path to pem file) used to sign the token.")
+	flag.StringVar(&secret, "s", "", "Secret used to sign the token.")
+	flag.CommandLine.Parse(args[1:])
+
+	verifyToken(token, keyFile, secret)
+}
+
+func usage(msg string) {
+	if msg != "" {
+		fmt.Printf("jwtverify: %v\n", msg)
 	}
-	return jwt.ParseRSAPublicKeyFromPEM(key)
+	fmt.Fprintf(os.Stderr, "%v\n", helpText)
+	os.Exit(1)
+}
+
+func fail(msg string) {
+	if msg != "" {
+		fmt.Fprintf(os.Stderr, "jwtverify: %v\n", msg)
+	}
+	os.Exit(1)
 }
