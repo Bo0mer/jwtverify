@@ -1,3 +1,4 @@
+// Program jwtverify is a tool to verify and decode JSON Web Tokens.
 package main
 
 import (
