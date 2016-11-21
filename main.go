@@ -18,7 +18,7 @@ Actions:
     help	Print this.
 
 Options:
-    -k		Key (path to pem file) used to sign the token. To use with RSA.
+    -k		Public key (path to pem file) to verify the token. To use with RSA.
     -s		Secret used to sign the token. To use with HS.
     -p		Pretty output.
 `
